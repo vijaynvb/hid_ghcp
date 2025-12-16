@@ -1,0 +1,55 @@
+
+
+SDLC: 
+    1. SRS
+        B2B: SOW
+        B2C: Survey fo the market 
+
+        Output: 
+            SRS Document: Sales team 
+
+    2. HLD
+        SD/Arch: 
+            1. Fesability study:
+                1. cost effective 
+                2. technology feasibility
+                3. time feasibility
+                4. infra feability 
+        Output: 
+            1. HLD Doc: 
+                1. ERdiagram 
+                2. flow diagram
+                3. usecase 
+                4. uml 
+                5. Graphs 
+            2. Technoloy suggestion 
+            3. Open API sepcifications -> interface rules [verbs, pathsm response code for you microservice, DTO, Models]
+            4. fromt end application 
+            5, backend application
+    3. LLD
+        1. writing algorithms 
+        2. writing code 
+        3. Unit test case
+        4. db activity 
+        5. devops script
+    4. Testing
+        1. manual testing 
+            1. write test cases
+            output: test script, excel 
+        2. Automation testing 
+            1. Fornt end testing -> Playwright, selenimun 
+            2. backend: postman collections, 
+    5. Deployment
+        1. Dockerfile 
+        2. K8s deploymet 
+        3. Terform [.tf]
+        4. Jenkins [.yaml]
+
+        sagapaterns: [rabitmq, kafka]
+            1. Coreogrhaphy
+            2. Orcastration
+
+    6. Observability [Maintain]
+        Actuator endpoints
+        promethos or graphana for monitoring 
+

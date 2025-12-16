@@ -1,0 +1,926 @@
+openapi: 3.0.0
+info:
+  title: Internal Task Management API
+  description: |
+    REST API for the Internal Task Management application (MVP). Covers authentication (OIDC/JWT and internal login fallback), users, tasks, comments, reports, and admin operations. Designed for Spring Boot backend, Angular frontend, and Postman import.
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+    description: Production server (replace with real URL)
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: auth
+    description: Authentication and token management
+  - name: users
+    description: User and team management (Admins)
+  - name: tasks
+    description: Task lifecycle and assignment
+  - name: comments
+    description: Task comments and discussion
+  - name: reports
+    description: Reporting endpoints and exports
+  - name: admin
+    description: Administrative configuration and audit
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        JWT issued by the OIDC provider or internal auth service. Include as
+        `Authorization: Bearer <token>`.
+    openIdConnect:
+      type: openIdConnect
+      openIdConnectUrl: https://auth.example.com/.well-known/openid-configuration
+      description: OIDC provider for SSO (configure for your IdP)
+  schemas:
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Page index (0-based)
+          example: 0
+        size:
+          type: integer
+          description: Page size
+          example: 20
+        totalElements:
+          type: integer
+          example: 153
+        totalPages:
+          type: integer
+          example: 8
+    Page[T]:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/T'
+        page:
+          $ref: '#/components/schemas/Pagination'
+    ErrorResponse:
+      type: object
+      required: [code, message, timestamp]
+      properties:
+        code:
+          type: string
+          description: Application error code
+          example: BAD_REQUEST
+        message:
+          type: string
+          example: "Invalid input: dueDate must be in the future"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-16T12:34:56Z"
+        details:
+          type: object
+          description: Additional error details (optional)
+    User:
+      type: object
+      required: [id, username, displayName, email, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "e7b8c6b2-9d2a-4b3b-8a1d-111111111111"
+        username:
+          type: string
+          example: "jdoe"
+        displayName:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        role:
+          type: string
+          enum: [Employee, Manager, Admin, Executive]
+          example: Employee
+        teamId:
+          type: string
+          format: uuid
+          nullable: true
+          example: "2a3b4c5d-0000-0000-0000-222222222222"
+    UserCreateRequest:
+      type: object
+      required: [username, displayName, email, role]
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [Employee, Manager, Admin, Executive]
+    Team:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    Priority:
+      type: string
+      enum: [Low, Medium, High, Critical]
+      example: Medium
+    Status:
+      type: string
+      enum: [Open, InProgress, Blocked, Completed, Cancelled]
+      example: Open
+    Task:
+      type: object
+      required: [id, title, status, priority, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "c1a2b3d4-1111-2222-3333-444444444444"
+        title:
+          type: string
+          example: "Investigate login outage"
+        description:
+          type: string
+          example: "Users report they cannot login via SSO. Investigate and resolve."
+        priority:
+          $ref: '#/components/schemas/Priority'
+        status:
+          $ref: '#/components/schemas/Status'
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-12-20"
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        teamId:
+          type: string
+          format: uuid
+          nullable: true
+        createdBy:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        overdueFlag:
+          type: boolean
+          example: false
+    TaskCreateRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          example: "Fix broken build"
+        description:
+          type: string
+        priority:
+          $ref: '#/components/schemas/Priority'
+        dueDate:
+          type: string
+          format: date
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+    TaskUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          $ref: '#/components/schemas/Priority'
+        status:
+          $ref: '#/components/schemas/Status'
+        dueDate:
+          type: string
+          format: date
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+    Comment:
+      type: object
+      required: [id, body, authorId, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        body:
+          type: string
+        authorId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+    CommentCreateRequest:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        actorId:
+          type: string
+          format: uuid
+        entityType:
+          type: string
+        entityId:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+  parameters:
+    page:
+      name: page
+      in: query
+      description: Page index (0-based)
+      schema:
+        type: integer
+        default: 0
+    size:
+      name: size
+      in: query
+      description: Page size
+      schema:
+        type: integer
+        default: 20
+    sort:
+      name: sort
+      in: query
+      description: Sort order (field,asc|desc). e.g. createdAt,desc
+      schema:
+        type: string
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Internal login (fallback)
+      description: Authenticate using internal username/password fallback when SSO is not available. Returns a JWT access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              example:
+                username: jdoe
+                password: secret
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  tokenType:
+                    type: string
+                    example: Bearer
+                  expiresIn:
+                    type: integer
+                    example: 3600
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users:
+    get:
+      tags: [users]
+      summary: List users
+      description: Returns a paginated list of users. Admin access required.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/sort'
+      responses:
+        '200':
+          description: Paginated users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page[T]'
+              examples:
+                sample:
+                  value:
+                    content:
+                      - id: "e7b8c6b2-9d2a-4b3b-8a1d-111111111111"
+                        username: jdoe
+                        displayName: John Doe
+                        email: john.doe@example.com
+                        role: Employee
+                        teamId: "2a3b4c5d-0000-0000-0000-222222222222"
+                    page:
+                      page: 0
+                      size: 20
+                      totalElements: 1
+                      totalPages: 1
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [users]
+      summary: Create user (Admin)
+      description: Create a new user (Admin only). For SSO/SCIM environments, user provisioning may be handled externally.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/{userId}:
+    get:
+      tags: [users]
+      summary: Get user by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [users]
+      summary: Update user (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /tasks:
+    get:
+      tags: [tasks]
+      summary: List tasks
+      description: Returns paginated list of tasks. Supports filtering by assignee, status, priority, tags, teamId, and overdue flag.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/sort'
+        - name: assigneeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/Status'
+        - name: priority
+          in: query
+          schema:
+            $ref: '#/components/schemas/Priority'
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: teamId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: overdue
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Paginated tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Page[T]'
+              examples:
+                sample:
+                  value:
+                    content:
+                      - id: "c1a2b3d4-1111-2222-3333-444444444444"
+                        title: "Investigate login outage"
+                        description: "Users cannot login via SSO"
+                        priority: High
+                        status: Open
+                        dueDate: "2025-12-20"
+                        assigneeId: "e7b8c6b2-9d2a-4b3b-8a1d-111111111111"
+                        tags: [sso, outage]
+                        createdAt: "2025-12-16T10:00:00Z"
+                    page:
+                      page: 0
+                      size: 20
+                      totalElements: 1
+                      totalPages: 1
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+    post:
+      tags: [tasks]
+      summary: Create a task
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+            examples:
+              sample:
+                value:
+                  title: "Fix build"
+                  description: "Fix CI build that is failing on tests"
+                  priority: High
+                  dueDate: "2025-12-18"
+                  assigneeId: "e7b8c6b2-9d2a-4b3b-8a1d-111111111111"
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /tasks/{taskId}:
+    get:
+      tags: [tasks]
+      summary: Get task by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [tasks]
+      summary: Replace task
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [tasks]
+      summary: Update task (partial)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateRequest'
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [tasks]
+      summary: Soft-delete task (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Deleted (no content)
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /tasks/{taskId}/assignee:
+    put:
+      tags: [tasks]
+      summary: Reassign a task
+      description: Managers may reassign tasks for direct reports; Admins may reassign any task.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assigneeId]
+              properties:
+                assigneeId:
+                  type: string
+                  format: uuid
+              example:
+                assigneeId: "f1e2d3c4-2222-3333-4444-555555555555"
+      responses:
+        '200':
+          description: Reassigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not manager of assignee)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /tasks/{taskId}/comments:
+    get:
+      tags: [comments]
+      summary: List comments for a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [comments]
+      summary: Add comment to task
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreateRequest'
+            example:
+              body: "Investigated and opened a ticket with SSO team."
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /reports/completed:
+    get:
+      tags: [reports]
+      summary: Completed tasks report
+      description: |
+        Return list of completed tasks within a date range. Supports CSV export
+        by providing `Accept: text/csv`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Tasks list (JSON or CSV)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid dates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /reports/overdue:
+    get:
+      tags: [reports]
+      summary: Overdue tasks report
+      description: Returns overdue tasks and metrics. Supports CSV.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: teamId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Overdue tasks and summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  overdueCount:
+                    type: integer
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /admin/audit:
+    get:
+      tags: [admin]
+      summary: Export audit logs
+      description: Admin can export audit logs filtered by entity type and date range.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Audit logs (JSON)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLog'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+security:
+  - bearerAuth: []
+
+
+x-pagination:
+  description: |
+    Standard pagination parameters are `page`, `size`, and `sort`.
