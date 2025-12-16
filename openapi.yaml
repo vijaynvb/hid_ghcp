@@ -53,13 +53,13 @@ components:
         totalPages:
           type: integer
           example: 8
-    Page[T]:
+    Page:
       type: object
       properties:
         content:
           type: array
           items:
-            $ref: '#/components/schemas/T'
+            type: object
         page:
           $ref: '#/components/schemas/Pagination'
     ErrorResponse:
@@ -358,7 +358,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Page[T]'
+                $ref: '#/components/schemas/Page'
               examples:
                 sample:
                   value:
@@ -517,7 +517,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Page[T]'
+                $ref: '#/components/schemas/Page'
               examples:
                 sample:
                   value:
