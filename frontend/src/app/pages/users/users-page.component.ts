@@ -7,16 +7,16 @@ import { FormBuilder, Validators } from '@angular/forms';
   template: `
     <mat-card>
       <mat-toolbar>Users</mat-toolbar>
-      <form [formGroup]="form" (ngSubmit)="submit()" class="user-form">
-        <mat-form-field appearance="fill"><mat-label>Username</mat-label><input matInput formControlName="username" /></mat-form-field>
-        <mat-form-field appearance="fill"><mat-label>Display name</mat-label><input matInput formControlName="displayName" /></mat-form-field>
-        <button mat-raised-button color="primary" type="submit" [disabled]="!form.valid">Create User</button>
-      </form>
-      <mat-list>
-        <mat-list-item *ngFor="let u of users">
-          <app-user-item [user]="u" (deleted)="deleteUser($event)"></app-user-item>
-        </mat-list-item>
-      </mat-list>
+      <div class="users-top">
+        <form [formGroup]="form" (ngSubmit)="submit()" class="user-form card">
+          <mat-form-field appearance="fill"><mat-label>Username</mat-label><input matInput formControlName="username" /></mat-form-field>
+          <mat-form-field appearance="fill"><mat-label>Display name</mat-label><input matInput formControlName="displayName" /></mat-form-field>
+          <button mat-raised-button color="primary" type="submit" [disabled]="!form.valid">Create User</button>
+        </form>
+      </div>
+      <div class="users-list">
+        <app-user-item *ngFor="let u of users" [user]="u" (deleted)="deleteUser($event)"></app-user-item>
+      </div>
     </mat-card>
   `
 })

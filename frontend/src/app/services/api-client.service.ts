@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ApiClientService {
-  // backend runs on port 9095 in this scaffold (adjust if you change server.port)
+  // backend runs on port 8080 in this scaffold (adjust if you change server.port)
   base = environment.apiBase || 'http://localhost:9095';
   constructor(private http: HttpClient) {}
 

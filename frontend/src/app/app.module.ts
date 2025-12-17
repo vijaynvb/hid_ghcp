@@ -8,6 +8,8 @@ import { AppRoutingModule } from './app-routing.module';
 import { TasksPageComponent } from './pages/tasks/tasks-page.component';
 import { TasksGeneratedComponent } from './pages/tasks/tasks-generated.component';
 import { UsersPageComponent } from './pages/users/users-page.component';
+import { LoginComponent } from './pages/auth/login.component';
+import { ProfileComponent } from './pages/auth/profile.component';
 import { TaskFormComponent } from './components/task-form/task-form.component';
 import { TaskItemComponent } from './components/task-item/task-item.component';
 import { UserItemComponent } from './components/user-item/user-item.component';
@@ -27,6 +29,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @NgModule({
   declarations: [
@@ -40,6 +45,8 @@ import { MatIconModule } from '@angular/material/icon';
     ,DashboardComponent
     ,LoadingComponent
     ,ToastComponent
+    ,LoginComponent
+    ,ProfileComponent
   ],
   imports: [
     BrowserModule,
@@ -57,6 +64,9 @@ import { MatIconModule } from '@angular/material/icon';
     MatSelectModule,
     MatListModule,
     MatIconModule
+    ,MatCheckboxModule
+    ,MatDividerModule
+    ,MatTabsModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }

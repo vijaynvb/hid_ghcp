@@ -1,3 +1,86 @@
-/* Minimal global styles */
-body { font-family: Arial, sans-serif; margin: 16px; }
+/* Global theme styles for Todo App */
+:root{
+	--brand-dark: #214b36;
+	--brand-mid: #3a7a56;
+	--brand-light: #d9e6d9;
+	--accent: #f0b84e;
+	--muted: #f4f4f4;
+	--container-width: 1000px;
+}
+html,body{height:100%;}
+body { font-family: 'Inter', Arial, sans-serif; margin:0; background:var(--muted); color:#111 }
 h2 { margin-top: 0; }
+
+.hero{background: linear-gradient(180deg, rgba(33,75,54,0.9), rgba(33,75,54,0.8)); color: #fff; padding:36px 0; box-shadow:0 2px 0 rgba(0,0,0,0.1);}
+.hero-inner{max-width:var(--container-width);margin:0 auto;padding:0 16px;}
+.hero{background-image: url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1650&q=80'); background-size:cover; background-position:center;}
+.title{font-size:64px;font-weight:700;margin:0;text-align:center;letter-spacing:1px;text-shadow:0 2px 8px rgba(0,0,0,0.45)}
+.nav-row{display:flex;align-items:center;justify-content:space-between;margin-top:16px}
+.main-nav a{background:var(--brand-light);padding:10px 26px;border-radius:6px;margin-right:8px;color:var(--brand-dark);text-decoration:none;font-weight:600}
+.main-nav a.active{background:var(--brand-dark);color:#fff}
+.auth{display:flex;align-items:center;gap:12px}
+.login-link{color:#fff;background:transparent;border:1px solid rgba(255,255,255,0.18);padding:8px 12px;border-radius:6px;text-decoration:none}
+.welcome{font-weight:600}
+.container{max-width:var(--container-width);margin:24px auto;padding:0 16px}
+
+/* Cards and lists should feel light */
+mat-card{border-radius:8px;padding:12px;background:#fff}
+
+/* Task item card */
+.card{box-shadow:0 4px 14px rgba(0,0,0,0.06);border-radius:6px;background:#fff;padding:12px;margin-bottom:12px;display:flex;align-items:center}
+.task-item .left{width:48px;display:flex;align-items:center;justify-content:center}
+.task-item .middle{flex:1;padding:6px 12px}
+.task-item .right{display:flex;align-items:center;gap:8px}
+.task-item .title-row{display:flex;align-items:center;justify-content:space-between}
+.task-item .title{font-size:15px}
+.task-item .meta{color:#666;display:flex;align-items:center;gap:8px}
+.task-item .sub{color:#777;font-size:13px;margin-top:6px}
+.priority{width:18px;height:28px;border-radius:10px;display:inline-block;box-shadow:0 1px 0 rgba(0,0,0,0.06)}
+.prio-high{background:#e74c3c}
+.prio-med{background:#f0b84e}
+.prio-low{background:#f7d08a}
+.priority-wrap{display:flex;align-items:center;justify-content:center;margin-left:6px}
+
+/* enlarge checkbox */
+.mat-checkbox .mat-checkbox-frame { width:20px; height:20px }
+.mat-checkbox .mat-checkbox-background, .mat-checkbox .mat-checkbox-checkmark-path { transform: scale(1.1) }
+
+/* user item */
+.user-item{display:flex;align-items:center;padding:8px;background:#fff;border-radius:6px}
+.user-item .avatar{width:44px;height:44px;border-radius:50%;background:var(--brand-mid);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.user-item .user-middle{flex:1;padding:0 12px}
+.user-item .name{font-weight:600}
+.user-item .email{font-size:13px;color:#666}
+
+/* task form inline */
+.task-create{display:flex;gap:8px;align-items:center}
+
+.users-top{display:flex;gap:16px;margin-bottom:12px}
+.users-list app-user-item{display:block;margin-bottom:8px}
+
+/* small helpers */
+.btn.small{padding:6px 8px;font-size:13px}
+
+/* form tweaks for pages */
+.user-form { display:flex; flex-wrap:wrap; gap:12px }
+
+/* responsive */
+@media (max-width:720px){.title{font-size:36px}.nav-row{flex-direction:column;gap:12px}.main-nav a{padding:8px 12px}}
+
+/* pill tabs for tasks */
+.mat-tab-group .mat-tab-labels { justify-content:center; }
+.mat-tab-group.mat-primary .mat-ink-bar { display:none; }
+.mat-tab-label { background:var(--brand-light); color:var(--brand-dark); border-radius:6px 6px 0 0; margin:0 4px; padding:8px 22px; font-weight:600 }
+.mat-tab-label.mat-tab-label-active { background:var(--brand-dark); color:#fff }
+
+.add-btn{ background: #2e7d32; color:#fff }
+.spacer{flex:1}
+
+.completed-section h3{margin-top:18px;margin-bottom:8px}
+
+/* center the page content like the screenshot with wider title area */
+.hero-inner{display:flex;flex-direction:column;align-items:center}
+.title{margin-bottom:8px}
+
+/* make task list container cards full width */
+.task-list app-task-item .card, .users-list app-user-item{width:100%}
