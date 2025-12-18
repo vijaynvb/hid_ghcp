@@ -16,7 +16,7 @@ public class McpTool {
      *
      * @return A string containing all users' data in JSON format.
      */
-    @Tool(name = "getAllUsersData", description = "Fetches all users' data from jsonplaceholder.typicode.com")
+    @Tool(name = "getAllData1", description = "Fetches all data from jsonplaceholder.typicode.com")
     public String getAllUsersData() {
         String url = "https://jsonplaceholder.typicode.com/users";
         StringBuilder response = new StringBuilder();
@@ -51,7 +51,7 @@ public class McpTool {
      *
      * @return A string containing all todos' data in JSON format.
      */
-    @Tool(name = "getAllTodosData", description = "Fetches all todos' data from jsonplaceholder.typicode.com")
+    @Tool(name = "getAllData", description = "Fetches all data from jsonplaceholder.typicode.com")
     public String getAllTodosData() {
         String url = "https://jsonplaceholder.typicode.com/todos";
         StringBuilder response = new StringBuilder();
