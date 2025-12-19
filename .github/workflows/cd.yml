@@ -1,0 +1,92 @@
+name: CD Local Kubernetes
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+  TF_WORKING_DIR: infra/terraform
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: local-kubernetes
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.29.2
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.kube
+          echo "$KUBE_CONFIG_DATA" | base64 --decode > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Verify cluster connectivity
+        run: kubectl version --short
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init -upgrade
+
+      - name: Terraform validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          BACKEND_IMAGE_REPOSITORY: ${{ secrets.ARTIFACTORY_DOCKER_REGISTRY }}/task-backend
+          FRONTEND_IMAGE_REPOSITORY: ${{ secrets.ARTIFACTORY_DOCKER_REGISTRY }}/task-frontend
+          KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE }}
+        run: |
+          set -euo pipefail
+          terraform apply -auto-approve \
+            -var "backend_image=${BACKEND_IMAGE_REPOSITORY}:${IMAGE_TAG}" \
+            -var "frontend_image=${FRONTEND_IMAGE_REPOSITORY}:${IMAGE_TAG}" \
+            -var "kube_namespace=${KUBE_NAMESPACE:-taskmgmt}"
+
+      - name: Update backend workload
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          BACKEND_IMAGE_REPOSITORY: ${{ secrets.ARTIFACTORY_DOCKER_REGISTRY }}/task-backend
+          KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE }}
+        run: |
+          set -euo pipefail
+          kubectl set image deployment/task-backend backend="${BACKEND_IMAGE_REPOSITORY}:${IMAGE_TAG}" --namespace "${KUBE_NAMESPACE:-taskmgmt}"
+          kubectl rollout status deployment/task-backend --namespace "${KUBE_NAMESPACE:-taskmgmt}"
+
+      - name: Update frontend workload
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          FRONTEND_IMAGE_REPOSITORY: ${{ secrets.ARTIFACTORY_DOCKER_REGISTRY }}/task-frontend
+          KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE }}
+        run: |
+          set -euo pipefail
+          kubectl set image deployment/task-frontend frontend="${FRONTEND_IMAGE_REPOSITORY}:${IMAGE_TAG}" --namespace "${KUBE_NAMESPACE:-taskmgmt}"
+          kubectl rollout status deployment/task-frontend --namespace "${KUBE_NAMESPACE:-taskmgmt}"

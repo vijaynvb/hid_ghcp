@@ -57,7 +57,18 @@ SDLC:
 
 
 1. Devops: 
-    
+    1. code -> distribute:
+    2. CI/CD -> Tool [Jenkins, Github Actions, Bamboob, Azure Devops]
+        CI: 
+            Build 
+            containerize
+            unit test 
+            publish to artifactory
+        CD: 
+            infrastucture using teraform 
+            Deploy 
+
+
 2. Automate perreview:
 3. autofix issues:
 4. Security:
