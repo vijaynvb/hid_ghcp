@@ -53,3 +53,11 @@ SDLC:
         Actuator endpoints
         promethos or graphana for monitoring 
 
+
+
+
+1. Devops: 
+    
+2. Automate perreview:
+3. autofix issues:
+4. Security:
