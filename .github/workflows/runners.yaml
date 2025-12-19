@@ -1,4 +1,4 @@
-name: 23-Workflow Runners
+name: Workflow Runners
 
 on: workflow_dispatch
 
