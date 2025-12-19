@@ -1,6 +1,6 @@
 ---
 description: 'Architect / Planner: analyze requirements and produce design / architecture plan.'
-tools: ['search', 'usages', 'fetch', 'githubRepo', 'todos']
+tools: ['read/readFile', 'search', 'web', 'todo']
 model: GPT-5 mini (copilot)
 handoffs:
   - label: 'Proceed to Implementation'

@@ -1,0 +1,147 @@
+.tasks-page {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tasks-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.tasks-hero__info h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.tasks-hero__info p {
+  margin: 4px 0 0;
+  color: #4a4a4a;
+}
+
+.tasks-hero__add {
+  appearance: none;
+  border: none;
+  background: #2f6f3b;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(47, 111, 59, 0.35);
+}
+
+.tasks-hero__add .icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tasks-hero__add:hover {
+  background: #24572d;
+}
+
+.tasks-segments {
+  display: inline-flex;
+  background: #f0f4f0;
+  padding: 6px;
+  border-radius: 999px;
+  width: fit-content;
+  gap: 4px;
+}
+
+.tasks-segments button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: #3f5f49;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tasks-segments button.active {
+  background: #2f6f3b;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(47, 111, 59, 0.35);
+}
+
+.tasks-form {
+  background: #f9fbf9;
+  padding: 18px;
+  border-radius: 10px;
+  border: 1px solid #e1e9e1;
+}
+
+.tasks-list,
+.tasks-completed__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tasks-empty {
+  text-align: center;
+  padding: 36px 12px;
+  border-radius: 12px;
+  background: #f9fbf9;
+  border: 1px dashed #c5d4c5;
+}
+
+.tasks-empty h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.tasks-completed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tasks-completed__toggle {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2f6f3b;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .tasks-page {
+    padding: 18px;
+  }
+
+  .tasks-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tasks-hero__add {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tasks-segments {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

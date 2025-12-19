@@ -1,0 +1,93 @@
+<section class="dashboard">
+  <header class="dashboard__hero">
+    <div class="dashboard__hero-copy">
+      <h2>Dashboard</h2>
+      <p>Monitor workload, highlight overdue tasks, and welcome new teammates.</p>
+    </div>
+    <div class="dashboard__hero-meta">
+      <span class="dashboard__date">{{ (users?.length || 0) }} team members</span>
+      <span class="dashboard__date">{{ (tasks?.length || 0) }} total tasks</span>
+    </div>
+  </header>
+
+  <section class="dashboard__metrics">
+    <article class="metric" *ngFor="let metric of metrics" [style.--metric-accent]="metric.accent">
+      <span class="metric__label">{{ metric.label }}</span>
+      <span class="metric__value">{{ metric.value }}</span>
+      <span class="metric__description">{{ metric.description }}</span>
+    </article>
+  </section>
+
+  <section class="dashboard__grid">
+    <article class="panel panel--tasks">
+      <header class="panel__header">
+        <h3>Plan today's work</h3>
+        <button type="button" class="panel__refresh" (click)="reloadTasks()">Refresh</button>
+      </header>
+      <app-task-form (created)="reloadTasks()"></app-task-form>
+      <div class="panel__list" *ngIf="spotlightTasks.length; else noOpenTasks">
+        <app-task-item
+          *ngFor="let task of spotlightTasks"
+          [task]="task"
+          (edit)="onTaskEdit($event)"
+          (remove)="onTaskDelete($event)"
+          (toggleComplete)="onTaskToggle(task, $event)"
+        ></app-task-item>
+      </div>
+    </article>
+
+    <article class="panel panel--users">
+      <header class="panel__header">
+        <h3>Invite teammates</h3>
+        <button type="button" class="panel__refresh" (click)="reloadUsers()">Refresh</button>
+      </header>
+      <form class="user-form" [formGroup]="userForm" (ngSubmit)="createUser()">
+        <div class="user-form__row">
+          <mat-form-field appearance="fill">
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="username" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Display name</mat-label>
+            <input matInput formControlName="displayName" />
+          </mat-form-field>
+        </div>
+        <div class="user-form__row">
+          <mat-form-field appearance="fill">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+          <mat-form-field appearance="fill">
+            <mat-label>Role</mat-label>
+            <mat-select formControlName="role">
+              <mat-option value="Employee">Employee</mat-option>
+              <mat-option value="Manager">Manager</mat-option>
+              <mat-option value="Admin">Admin</mat-option>
+              <mat-option value="Executive">Executive</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="user-form__actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="userForm.invalid">Add user</button>
+        </div>
+      </form>
+      <div class="panel__list" *ngIf="users.length; else emptyUsers">
+        <app-user-item *ngFor="let user of users" [user]="user" (deleted)="onUserDelete($event)"></app-user-item>
+      </div>
+    </article>
+  </section>
+
+  <ng-template #noOpenTasks>
+    <div class="panel__empty">
+      <h4>No open tasks</h4>
+      <p>Everything is wrapped up. Add a new task to kick things off.</p>
+    </div>
+  </ng-template>
+
+  <ng-template #emptyUsers>
+    <div class="panel__empty">
+      <h4>No users yet</h4>
+      <p>Create users to collaborate on tasks and share progress.</p>
+    </div>
+  </ng-template>
+</section>

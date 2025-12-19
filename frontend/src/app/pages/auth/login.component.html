@@ -1,0 +1,20 @@
+<section class="login">
+  <div class="login__card">
+    <h2>Welcome back</h2>
+    <p class="login__subtitle">Sign in to review tasks and updates.</p>
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-form-field appearance="fill">
+        <mat-label>Username</mat-label>
+        <input matInput formControlName="username" autocomplete="username" />
+      </mat-form-field>
+      <mat-form-field appearance="fill">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" autocomplete="current-password" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || isSubmitting">
+        {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
+      </button>
+      <div class="login__error" *ngIf="error">{{ error }}</div>
+    </form>
+  </div>
+</section>

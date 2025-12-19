@@ -1,0 +1,55 @@
+<section class="tasks-page">
+  <header class="tasks-hero">
+    <div class="tasks-hero__info">
+      <h2>Tasks</h2>
+      <p>Stay on top of today's priorities and never miss a deadline.</p>
+    </div>
+    <button type="button" class="tasks-hero__add" (click)="showForm = !showForm">
+      <span class="icon">+</span>
+      {{ showForm ? 'Close' : 'Add Task' }}
+    </button>
+  </header>
+
+  <nav class="tasks-segments" aria-label="Task status filters">
+    <button type="button" [class.active]="activeFilter === 'today'" (click)="onFilterChange('today')">Today</button>
+    <button type="button" [class.active]="activeFilter === 'pending'" (click)="onFilterChange('pending')">Pending</button>
+    <button type="button" [class.active]="activeFilter === 'overdue'" (click)="onFilterChange('overdue')">Overdue</button>
+  </nav>
+
+  <section class="tasks-form" *ngIf="showForm">
+    <app-task-form (created)="onCreated()"></app-task-form>
+  </section>
+
+  <section class="tasks-list" *ngIf="filtered.length; else emptyState">
+    <app-task-item
+      *ngFor="let task of filtered"
+      [task]="task"
+      (edit)="onEdit($event)"
+      (remove)="onDelete($event)"
+      (toggleComplete)="onToggleCompletion(task, $event)"
+    ></app-task-item>
+  </section>
+
+  <ng-template #emptyState>
+    <div class="tasks-empty">
+      <h3>No tasks in this view</h3>
+      <p>Create a task or adjust the filters to get started.</p>
+    </div>
+  </ng-template>
+
+  <section class="tasks-completed" *ngIf="completedTasks.length">
+    <button type="button" class="tasks-completed__toggle" (click)="showCompleted = !showCompleted">
+      Completed
+      <span aria-hidden="true" [innerHTML]="showCompleted ? '&#9650;' : '&#9660;'"></span>
+    </button>
+    <div class="tasks-completed__list" *ngIf="showCompleted">
+      <app-task-item
+        *ngFor="let task of completedTasks"
+        [task]="task"
+        (edit)="onEdit($event)"
+        (remove)="onDelete($event)"
+        (toggleComplete)="onToggleCompletion(task, $event)"
+      ></app-task-item>
+    </div>
+  </section>
+</section>

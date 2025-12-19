@@ -20,7 +20,7 @@ public class OpenApiConfig {
                         .version("0.0.1")
                         .description("API documentation for Task Management backend")
                         .contact(new Contact().name("Dev Team").email("dev@example.com")))
-                .addServersItem(new Server().url("http://localhost:8080").description("Local server"));
+                .addServersItem(new Server().url("http://localhost:9095").description("Local server"));
     }
 
     @Bean

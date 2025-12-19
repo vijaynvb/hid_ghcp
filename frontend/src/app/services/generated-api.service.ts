@@ -13,14 +13,16 @@ export class GeneratedApiService {
   }
 
   // Users - return Promises (original) and also Observable wrappers
-  listUsers(params?: any): Promise<any> { return this.client.users.getUsers(params); }
-  listUsers$ (params?: any): Observable<any> { return from(this.listUsers(params)); }
+  /** Retrieves the paginated user list, defaulting params to an empty object to avoid destructuring errors. */
+  listUsers(params: any = {}): Promise<any> { return this.client.users.getUsers(params ?? {}); }
+  listUsers$ (params: any = {}): Observable<any> { return from(this.listUsers(params)); }
   createUser(dto: any): Promise<any> { return this.client.users.postUsers({ requestBody: dto }); }
   createUser$(dto: any): Observable<any> { return from(this.createUser(dto)); }
 
   // Tasks
-  listTasks(params?: any): Promise<any> { return this.client.tasks.getTasks(params); }
-  listTasks$ (params?: any): Observable<any> { return from(this.listTasks(params)); }
+  /** Retrieves the paginated task list, defaulting params to an empty object to avoid destructuring errors. */
+  listTasks(params: any = {}): Promise<any> { return this.client.tasks.getTasks(params ?? {}); }
+  listTasks$ (params: any = {}): Observable<any> { return from(this.listTasks(params)); }
   createTask(dto: any): Promise<any> { return this.client.tasks.postTasks({ requestBody: dto }); }
   createTask$(dto: any): Observable<any> { return from(this.createTask(dto)); }
 }

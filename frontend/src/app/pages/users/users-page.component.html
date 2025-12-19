@@ -1,0 +1,53 @@
+<section class="users-page">
+  <header class="users-hero">
+    <div>
+      <h2>Users</h2>
+      <p>Manage collaborators and invite new teammates to the workspace.</p>
+    </div>
+    <button type="button" class="users-hero__refresh" (click)="reload()">Refresh</button>
+  </header>
+
+  <section class="users-form">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="users-form__row">
+        <mat-form-field appearance="fill">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" />
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Display name</mat-label>
+          <input matInput formControlName="displayName" />
+        </mat-form-field>
+      </div>
+      <div class="users-form__row">
+        <mat-form-field appearance="fill">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" />
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Role</mat-label>
+          <mat-select formControlName="role">
+            <mat-option value="Employee">Employee</mat-option>
+            <mat-option value="Manager">Manager</mat-option>
+            <mat-option value="Admin">Admin</mat-option>
+            <mat-option value="Executive">Executive</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="users-form__actions">
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Create user</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="users-list" *ngIf="users.length; else emptyUsers">
+    <app-user-item *ngFor="let user of users" [user]="user" (deleted)="deleteUser($event)"></app-user-item>
+  </section>
+
+  <ng-template #emptyUsers>
+    <div class="users-empty">
+      <h3>No users yet</h3>
+      <p>Add your first teammate to collaborate on tasks.</p>
+    </div>
+  </ng-template>
+</section>

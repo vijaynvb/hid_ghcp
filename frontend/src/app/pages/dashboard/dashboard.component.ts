@@ -1,72 +1,162 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { TaskService } from '../../services/task.service';
 import { UserService } from '../../services/user.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+interface DashboardTask {
+  id: string;
+  title: string;
+  dueDate?: string | Date;
+  completed?: boolean;
+  priority?: string;
+}
+
+interface DashboardUser {
+  id: string;
+  username: string;
+  displayName?: string;
+  email?: string;
+  role?: string;
+}
+
+interface MetricCard {
+  label: string;
+  value: number;
+  accent: string;
+  description: string;
+}
 
 @Component({
   selector: 'app-dashboard',
-  template: `
-    <mat-card class="dashboard-card">
-      <mat-toolbar color="primary">Admin Dashboard</mat-toolbar>
-      <div class="columns">
-        <section class="col">
-          <h3>Tasks</h3>
-          <mat-card>
-            <app-task-form (created)="reloadTasks()"></app-task-form>
-          </mat-card>
-          <mat-list>
-            <mat-list-item *ngFor="let t of tasks">
-              <app-task-item [task]="t" (edit)="onTaskEdit($event)" (remove)="onTaskDelete($event)"></app-task-item>
-            </mat-list-item>
-          </mat-list>
-        </section>
-
-        <section class="col">
-          <h3>Users</h3>
-          <mat-card>
-            <form [formGroup]="userForm" (ngSubmit)="createUser()" class="user-form">
-              <mat-form-field appearance="fill"><mat-label>Username</mat-label><input matInput formControlName="username" /></mat-form-field>
-              <mat-form-field appearance="fill"><mat-label>Display name</mat-label><input matInput formControlName="displayName" /></mat-form-field>
-              <mat-form-field appearance="fill"><mat-label>Email</mat-label><input matInput formControlName="email" /></mat-form-field>
-              <mat-form-field appearance="fill"><mat-label>Role</mat-label><mat-select formControlName="role"><mat-option value="Employee">Employee</mat-option><mat-option value="Manager">Manager</mat-option><mat-option value="Admin">Admin</mat-option><mat-option value="Executive">Executive</mat-option></mat-select></mat-form-field>
-              <button mat-raised-button color="primary" type="submit" [disabled]="userForm.invalid">Create User</button>
-            </form>
-          </mat-card>
-          <mat-list>
-            <mat-list-item *ngFor="let u of users">
-              <app-user-item [user]="u" (deleted)="onUserDelete($event)"></app-user-item>
-            </mat-list-item>
-          </mat-list>
-        </section>
-      </div>
-    </mat-card>
-  `,
-  styles: [`.dashboard-card { padding: 8px } .columns { display:flex; gap:24px } .col { flex:1 } .user-form { display:flex; flex-direction:column; gap:8px }`]
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
-  tasks: any[] = [];
-  users: any[] = [];
+export class DashboardComponent implements OnInit, OnDestroy {
+  tasks: DashboardTask[] = [];
+  users: DashboardUser[] = [];
   userForm: FormGroup;
+  private readonly destroy$ = new Subject<void>();
 
-  constructor(private taskService: TaskService, private userService: UserService, private fb: FormBuilder) {
-    this.userForm = this.fb.group({ username: ['', Validators.required], displayName: ['', Validators.required], email: ['', [Validators.required, Validators.email]], role: ['Employee', Validators.required] });
+  constructor(private readonly taskService: TaskService, private readonly userService: UserService, private readonly fb: FormBuilder) {
+    this.userForm = this.fb.group({
+      username: ['', Validators.required],
+      displayName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      role: ['Employee', Validators.required]
+    });
   }
 
-  ngOnInit(): void { this.reloadTasks(); this.reloadUsers(); }
-
-  reloadTasks() { this.taskService.list().subscribe((res:any) => this.tasks = res || []); }
-  reloadUsers() { this.userService.list().subscribe((res:any) => this.users = res || []); }
-
-  onTaskEdit(payload:any) {
-    const id = payload.id || payload._id; if (!id) return; this.taskService.update(id, payload).subscribe(() => this.reloadTasks());
+  /** Initialises dashboard data. */
+  ngOnInit(): void {
+    this.reloadTasks();
+    this.reloadUsers();
   }
 
-  onTaskDelete(id:string) { if (!confirm('Delete task?')) return; this.taskService.delete(id).subscribe(() => this.reloadTasks()); }
-
-  createUser() {
-    if (this.userForm.invalid) return;
-    this.userService.create(this.userForm.value).subscribe(() => { this.userForm.reset({ role: 'Employee' }); this.reloadUsers(); });
+  /** Completes subscriptions on destroy. */
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  onUserDelete(id:string) { if (!confirm('Delete user?')) return; this.userService.delete(id).subscribe(() => this.reloadUsers()); }
+  /** Reloads tasks from backend. */
+  reloadTasks(): void {
+    this.taskService
+      .listTyped$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((res: any) => {
+        this.tasks = res?.content || res || [];
+      });
+  }
+
+  /** Reloads users from backend. */
+  reloadUsers(): void {
+    this.userService
+      .listTyped$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((res: any) => {
+        this.users = res?.content || res || [];
+      });
+  }
+
+  /** Handles inline task edits. */
+  onTaskEdit(payload: DashboardTask): void {
+    const id = payload?.id;
+    if (!id) {
+      return;
+    }
+    this.taskService.update(id, payload).pipe(takeUntil(this.destroy$)).subscribe(() => this.reloadTasks());
+  }
+
+  /** Deletes a task after user confirmation. */
+  onTaskDelete(id: string): void {
+    if (!id) {
+      return;
+    }
+    if (!confirm('Delete task?')) {
+      return;
+    }
+    this.taskService.delete(id).pipe(takeUntil(this.destroy$)).subscribe(() => this.reloadTasks());
+  }
+
+  /** Toggles task completion from the dashboard spotlight list. */
+  onTaskToggle(task: DashboardTask, completed: boolean): void {
+    const id = task?.id;
+    if (!id) {
+      return;
+    }
+    this.taskService
+      .update(id, { ...task, completed })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.reloadTasks());
+  }
+
+  /** Creates a user from the dashboard quick form. */
+  createUser(): void {
+    if (this.userForm.invalid) {
+      return;
+    }
+    this.userService
+      .create(this.userForm.value)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.userForm.reset({ role: 'Employee' });
+        this.reloadUsers();
+      });
+  }
+
+  /** Deletes a user after confirmation. */
+  onUserDelete(id: string): void {
+    if (!id) {
+      return;
+    }
+    if (!confirm('Delete user?')) {
+      return;
+    }
+    this.userService.delete(id).pipe(takeUntil(this.destroy$)).subscribe(() => this.reloadUsers());
+  }
+
+  /** Derived metric summary used for the dashboard tiles. */
+  get metrics(): MetricCard[] {
+    const total = this.tasks.length;
+    const completed = this.tasks.filter(t => !!t.completed).length;
+    const overdue = this.tasks.filter(t => {
+      if (t.completed || !t.dueDate) {
+        return false;
+      }
+      return new Date(t.dueDate) < new Date();
+    }).length;
+    const activeUsers = this.users.length;
+    return [
+      { label: 'Open tasks', value: total - completed, accent: '#2f6f3b', description: 'Still in progress' },
+      { label: 'Completed', value: completed, accent: '#3a7a56', description: 'Wrapped up this week' },
+      { label: 'Overdue', value: overdue, accent: '#dc2626', description: 'Need attention' },
+      { label: 'Active users', value: activeUsers, accent: '#f0b84e', description: 'Collaborators onboard' }
+    ];
+  }
+
+  /** Convenience getter to show a short task preview. */
+  get spotlightTasks(): DashboardTask[] {
+    return this.tasks.filter(t => !t.completed).slice(0, 5);
+  }
 }

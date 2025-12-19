@@ -1,0 +1,20 @@
+.task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.task-form__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.task-form__field {
+  width: 100%;
+}
+
+.task-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}

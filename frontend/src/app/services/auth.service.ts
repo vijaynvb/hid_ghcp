@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ApiClientService } from './api-client.service';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { tap, switchMap, catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -17,7 +17,8 @@ export class AuthService {
     if (this.token) { this.fetchProfile().subscribe(() => {}); }
   }
 
-  setToken(token: string | null) {
+  /** Persists the access token and updates the reactive state. */
+  setToken(token: string | null): void {
     if (token) {
       localStorage.setItem(this.tokenKey, token);
     } else {
@@ -26,21 +27,28 @@ export class AuthService {
     this._token.next(token);
   }
 
-  get token() { return this._token.value; }
+  /** Returns the current access token value. */
+  get token(): string | null { return this._token.value; }
 
-  setUser(u: any|null){ this._user.next(u); }
+  /** Updates the in-memory representation of the authenticated user. */
+  setUser(u: any | null): void { this._user.next(u); }
 
-  // simple login against /auth/login; expects { accessToken }
+  /** Authenticates against the backend and hydrates the user profile. */
   login(username: string, password: string): Observable<any> {
     return this.api.post('/auth/login', { username, password }).pipe(
       tap((res: any) => { if (res?.accessToken) this.setToken(res.accessToken); }),
       switchMap(() => this.fetchProfile()),
-      catchError(err => { return of(err); })
+      catchError(err => {
+        this.logout();
+        return throwError(() => err);
+      })
     );
   }
 
-  logout() { this.setToken(null); this.setUser(null); }
+  /** Clears authentication state and tokens. */
+  logout(): void { this.setToken(null); this.setUser(null); }
 
+  /** Retrieves the authenticated user's profile from the API. */
   fetchProfile(): Observable<any> {
     // try common endpoints; prefer /auth/me then /users/me
     return this.api.get('/auth/me').pipe(

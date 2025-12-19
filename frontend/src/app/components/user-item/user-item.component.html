@@ -1,0 +1,13 @@
+<div class="user-item">
+  <div class="user-item__avatar">{{ initials }}</div>
+  <div class="user-item__details">
+    <div class="user-item__name">{{ user?.displayName || user?.username }}</div>
+    <div class="user-item__meta">
+      <span *ngIf="user?.email">{{ user?.email }}</span>
+      <span *ngIf="user?.role" class="user-item__role">{{ user?.role }}</span>
+    </div>
+  </div>
+  <button mat-icon-button color="warn" (click)="remove()" aria-label="Remove user">
+    <mat-icon>delete</mat-icon>
+  </button>
+</div>

@@ -1,0 +1,24 @@
+<div class="task-item">
+  <div class="task-item__checkbox">
+    <mat-checkbox [checked]="task?.completed" (change)="onToggle($event.checked)"></mat-checkbox>
+  </div>
+  <div class="task-item__details">
+    <div class="task-item__header">
+      <span class="task-item__title">{{ task?.title }}</span>
+      <span class="task-item__date" *ngIf="task?.dueDate">
+        <mat-icon>schedule</mat-icon>
+        {{ task?.dueDate | date: 'EEE MMM d yyyy' }}
+      </span>
+    </div>
+    <p class="task-item__description" *ngIf="task?.description">{{ task?.description }}</p>
+  </div>
+  <div class="task-item__meta">
+    <span class="task-item__priority" [ngClass]="priorityClass()"></span>
+    <button mat-icon-button color="primary" (click)="onEdit()" title="Edit task">
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button color="warn" (click)="onDelete()" title="Delete task">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</div>

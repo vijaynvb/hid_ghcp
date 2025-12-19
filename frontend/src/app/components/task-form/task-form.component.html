@@ -1,0 +1,28 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="task-form">
+  <div class="task-form__row">
+    <mat-form-field appearance="fill" class="task-form__field">
+      <mat-label>Task title</mat-label>
+      <input matInput formControlName="title" placeholder="Draft project proposal" />
+    </mat-form-field>
+    <mat-form-field appearance="fill" class="task-form__field">
+      <mat-label>Due date</mat-label>
+      <input matInput type="date" formControlName="dueDate" />
+    </mat-form-field>
+    <mat-form-field appearance="fill" class="task-form__field">
+      <mat-label>Priority</mat-label>
+      <mat-select formControlName="priority">
+        <mat-option value="Low">Low</mat-option>
+        <mat-option value="Medium">Medium</mat-option>
+        <mat-option value="High">High</mat-option>
+        <mat-option value="Critical">Critical</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <mat-form-field appearance="fill">
+    <mat-label>Description</mat-label>
+    <textarea matInput formControlName="description" rows="3" placeholder="Add more context"></textarea>
+  </mat-form-field>
+  <div class="task-form__actions">
+    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add Task</button>
+  </div>
+</form>

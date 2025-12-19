@@ -1,77 +1,131 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { TaskService } from '../../services/task.service';
+
+interface TaskViewModel {
+  id: string;
+  title: string;
+  description?: string;
+  dueDate?: string | Date;
+  completed?: boolean;
+  priority?: string;
+}
 
 @Component({
   selector: 'app-tasks-page',
-  template: `
-    <mat-card>
-      <mat-toolbar>
-        <span>Tasks</span>
-        <span class="spacer"></span>
-        <button mat-flat-button color="primary" class="add-btn" (click)="showForm = !showForm">{{showForm ? 'Close' : 'Add Task'}}</button>
-      </mat-toolbar>
-      <div style="margin-top:12px">
-        <app-task-form *ngIf="showForm" (created)="onCreated()"></app-task-form>
-      </div>
-
-      <mat-tab-group (selectedIndexChange)="onTabChange($event)" class="task-tabs">
-        <mat-tab label="Today"></mat-tab>
-        <mat-tab label="Pending"></mat-tab>
-        <mat-tab label="Overdue"></mat-tab>
-      </mat-tab-group>
-
-      <div class="task-list">
-        <app-task-item *ngFor="let t of filtered" [task]="t" (edit)="onEdit($event)" (remove)="onDelete($event)"></app-task-item>
-      </div>
-
-      <div class="completed-section">
-        <h3 (click)="showCompleted = !showCompleted" style="cursor:pointer">Completed <span [innerHTML]="showCompleted ? '&#9650;' : '&#9660;'"></span></h3>
-        <div *ngIf="showCompleted">
-          <app-task-item *ngFor="let t of completed" [task]="t" (edit)="onEdit($event)" (remove)="onDelete($event)"></app-task-item>
-        </div>
-      </div>
-    </mat-card>
-  `
+  templateUrl: './tasks-page.component.html',
+  styleUrls: ['./tasks-page.component.css']
 })
-export class TasksPageComponent implements OnInit {
-  tasks: any[] = [];
-  filtered: any[] = [];
-  activeTab = 0;
+export class TasksPageComponent implements OnInit, OnDestroy {
+  tasks: TaskViewModel[] = [];
+  filtered: TaskViewModel[] = [];
+  completedTasks: TaskViewModel[] = [];
+  activeFilter: 'today' | 'pending' | 'overdue' = 'today';
   showForm = false;
   showCompleted = false;
-  constructor(private taskService: TaskService) {}
-  ngOnInit(): void { this.reload(); }
-  reload() { this.taskService.listTyped$().subscribe((res:any) => { this.tasks = res?.content || res || []; this.applyFilter(); }); }
-  onEdit(payload:any) { const id = payload.id || payload._id; if (!id) return; this.taskService.update(id, payload).subscribe(() => this.reload()); }
-  onDelete(id:string) { if (!confirm('Delete task?')) return; this.taskService.delete(id).subscribe(() => this.reload()); }
+  private readonly destroy$ = new Subject<void>();
 
-  onCreated(){ this.showForm = false; this.reload(); }
+  constructor(private readonly taskService: TaskService) {}
 
-  ngDoCheck(): void { this.applyFilter(); }
-
-  onTabChange(index:number){ this.activeTab = index; this.applyFilter(); }
-
-  applyFilter(){
-    if (!this.tasks) { this.filtered = []; return; }
-    const now = new Date();
-    if (this.activeTab === 0) {
-      // Today: due date same day or no due date and not completed
-      this.filtered = this.tasks.filter(t => {
-        if (t.completed) return false;
-        if (!t.dueDate) return true;
-        const d = new Date(t.dueDate);
-        return d.toDateString() === now.toDateString();
-      });
-    } else if (this.activeTab === 1) {
-      // Pending: future dates
-      this.filtered = this.tasks.filter(t => { if (t.completed) return false; if (!t.dueDate) return true; return new Date(t.dueDate) > now; });
-    } else {
-      // Overdue
-      this.filtered = this.tasks.filter(t => { if (t.completed) return false; if (!t.dueDate) return false; return new Date(t.dueDate) < now; });
-    }
+  /** Loads tasks on component initialisation. */
+  ngOnInit(): void {
+    this.reload();
   }
 
-  get completed(){
-    return this.tasks ? this.tasks.filter(t => t.completed) : [];
+  /** Cleans up subscriptions to avoid memory leaks. */
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /** Refreshes task lists from the backend service. */
+  reload(): void {
+    this.taskService
+      .listTyped$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((res: any) => {
+        const entries: TaskViewModel[] = res?.content || res || [];
+        this.tasks = entries;
+        this.partitionTasks();
+      });
+  }
+
+  /** Handles successful task creation. */
+  onCreated(): void {
+    this.showForm = false;
+    this.reload();
+  }
+
+  /** Updates the active filter and recomputes the filtered list. */
+  onFilterChange(filter: 'today' | 'pending' | 'overdue'): void {
+    this.activeFilter = filter;
+    this.partitionTasks();
+  }
+
+  /** Requests task deletion after user confirmation. */
+  onDelete(id: string): void {
+    if (!id) {
+      return;
+    }
+    if (!confirm('Delete task?')) {
+      return;
+    }
+    this.taskService.delete(id).pipe(takeUntil(this.destroy$)).subscribe(() => this.reload());
+  }
+
+  /** Applies updates to a task via the backend. */
+  onEdit(payload: TaskViewModel): void {
+    const id = payload?.id;
+    if (!id) {
+      return;
+    }
+    this.taskService.update(id, payload).pipe(takeUntil(this.destroy$)).subscribe(() => this.reload());
+  }
+
+  /** Toggles task completion state and persists it. */
+  onToggleCompletion(task: TaskViewModel, completed: boolean): void {
+    const id = task?.id;
+    if (!id) {
+      return;
+    }
+    this.taskService
+      .update(id, { ...task, completed })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.reload());
+  }
+
+  private partitionTasks(): void {
+    if (!this.tasks) {
+      this.filtered = [];
+      this.completedTasks = [];
+      return;
+    }
+    const now = new Date();
+    this.completedTasks = this.tasks.filter(t => !!t.completed);
+    const pending = this.tasks.filter(t => !t.completed);
+
+    if (this.activeFilter === 'today') {
+      this.filtered = pending.filter(t => {
+        if (!t.dueDate) {
+          return true;
+        }
+        const due = new Date(t.dueDate);
+        return due.toDateString() === now.toDateString();
+      });
+    } else if (this.activeFilter === 'pending') {
+      this.filtered = pending.filter(t => {
+        if (!t.dueDate) {
+          return true;
+        }
+        return new Date(t.dueDate) > now;
+      });
+    } else {
+      this.filtered = pending.filter(t => {
+        if (!t.dueDate) {
+          return false;
+        }
+        return new Date(t.dueDate) < now;
+      });
+    }
   }
 }

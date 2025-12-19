@@ -1,25 +1,33 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
+interface UserItemView {
+  id: string;
+  username: string;
+  displayName?: string;
+  email?: string;
+  role?: string;
+}
+
 @Component({
   selector: 'app-user-item',
-  template: `
-    <div class="user-item card">
-      <div class="user-left">
-        <div class="avatar">{{(user.displayName || user.username)?.charAt(0)?.toUpperCase()}}</div>
-      </div>
-      <div class="user-middle">
-        <div class="name">{{user.displayName || user.username}}</div>
-        <div class="email">{{user.email}}</div>
-      </div>
-      <div class="user-right">
-        <button mat-icon-button color="warn" (click)="remove()"><mat-icon>delete</mat-icon></button>
-      </div>
-    </div>
-  `
+  templateUrl: './user-item.component.html',
+  styleUrls: ['./user-item.component.css']
 })
 export class UserItemComponent {
-  @Input() user: any = {};
+  @Input() user: UserItemView | null = null;
   @Output() deleted = new EventEmitter<string>();
 
-  remove() { this.deleted.emit(this.user.id); }
+  /** Emits delete event for parent container. */
+  remove(): void {
+    if (!this.user?.id) {
+      return;
+    }
+    this.deleted.emit(this.user.id);
+  }
+
+  /** Generates placeholder initials for avatars. */
+  get initials(): string {
+    const source = this.user?.displayName || this.user?.username || '';
+    return source.slice(0, 2).toUpperCase();
+  }
 }

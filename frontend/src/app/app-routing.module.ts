@@ -5,17 +5,17 @@ import { TasksGeneratedComponent } from './pages/tasks/tasks-generated.component
 import { UsersPageComponent } from './pages/users/users-page.component';
 import { LoginComponent } from './pages/auth/login.component';
 import { ProfileComponent } from './pages/auth/profile.component';
-
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { AuthGuard } from './services/auth.guard';
 
 const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'tasks', component: TasksPageComponent },
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+  { path: 'tasks', component: TasksPageComponent, canActivate: [AuthGuard] },
   { path: 'login', component: LoginComponent },
-  { path: 'profile', component: ProfileComponent },
-  { path: 'tasks-generated', component: TasksGeneratedComponent },
-  { path: 'users', component: UsersPageComponent }
+  { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
+  { path: 'tasks-generated', component: TasksGeneratedComponent, canActivate: [AuthGuard] },
+  { path: 'users', component: UsersPageComponent, canActivate: [AuthGuard] }
 ];
 
 @NgModule({
