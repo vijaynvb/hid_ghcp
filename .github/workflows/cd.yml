@@ -1,9 +1,6 @@
 name: CD Local Kubernetes
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 env:
