@@ -1,10 +1,6 @@
 name: CI Build and Publish
 
 on:
-  push:
-    branches:
-      - main
-      - develop
   pull_request:
     branches:
       - main
