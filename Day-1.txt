@@ -72,21 +72,3 @@ SDLC:
 2. Automate perreview:
 3. autofix issues:
 4. Security:
-
-
-
-Fix -> Create a branch 
-    -> fix the issue  
-    -> PR for merge [Per review, prerevied] -> copilot 
-    -> report -> update a comment for merge 
-    -> merge the branch into main 
-    -> delete develop branch 
-
-
-Issues-> create issue my repo:
-        -> Create a branch 
-        -> fix the issue  
-        -> PR for merge [Per review, prerevied] -> copilot 
-        -> report -> update a comment for merge 
-        -> merge the branch into main 
-        -> delete develop branch 
