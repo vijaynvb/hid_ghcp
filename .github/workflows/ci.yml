@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   build-test-publish:
-    runs-on: ubuntu-latest
+    runs-on: Vijays-MacBook-Pro
     permissions:
       contents: read
       packages: write
